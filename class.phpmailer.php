@@ -254,14 +254,6 @@ class PHPMailer
     public $SMTPTimeout = 300;
 
     /**
-     * SMTP connection timeout in seconds.
-     * Default of 5 minutes (300sec) is from RFC2821 section 4.5.3.2.
-     *
-     * @var int
-     */
-    public $SMTPKeepAlive = false;
-
-    /**
      * Whether to split long to addresses into multiple command arguments.
      * Automatically disabled if RFC 6531 is supported.
      *
