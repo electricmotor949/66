@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMTP Credential Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .debug-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 SMTP Credential Tester</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            Test SMTP credentials against mail.debtclearsa.co.za
+        </p>
+        
+        <form id="smtpForm">
+            <div class="form-group">
+                <label for="email">Email Address:</label>
+                <input type="email" id="email" name="email" required placeholder="user@debtclearsa.co.za">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required placeholder="Enter password">
+            </div>
+            
+            <button type="submit" id="submitBtn">Test SMTP Credentials</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+        <div id="debugInfo" class="debug-info"></div>
+    </div>
+
+    <script>
+        document.getElementById('smtpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            const debugDiv = document.getElementById('debugInfo');
+            
+            // Reset display
+            resultDiv.style.display = 'none';
+            debugDiv.style.display = 'none';
+            
+            // Show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Testing...';
+            
+            const formData = new FormData();
+            formData.append('email', document.getElementById('email').value);
+            formData.append('password', document.getElementById('password').value);
+            
+            try {
+                const response = await fetch('smtp_credential_tester.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Display result
+                resultDiv.className = 'result ' + (data.success ? 'success' : 'error');
+                resultDiv.style.display = 'block';
+                
+                let resultHtml = `
+                    <h3>${data.success ? '✅ Valid Credentials' : '❌ Invalid Credentials'}</h3>
+                    <p><strong>Message:</strong> ${data.msg}</p>
+                    <p><strong>Attempt:</strong> #${data.attempt}</p>
+                    <p><strong>SMTP Server:</strong> ${data.smtp_server}</p>
+                `;
+                
+                if (!data.success && data.error_details) {
+                    resultHtml += `<p><strong>Error:</strong> ${data.error_details}</p>`;
+                }
+                
+                if (data.notification_sent !== undefined) {
+                    resultHtml += `<p><strong>Notification Email:</strong> ${data.notification_sent ? 'Sent' : 'Failed'}</p>`;
+                }
+                
+                resultDiv.innerHTML = resultHtml;
+                
+                // Display debug info
+                if (data.debug_info) {
+                    debugDiv.style.display = 'block';
+                    debugDiv.textContent = JSON.stringify(data.debug_info, null, 2);
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check if the PHP script is accessible and properly configured.</p>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Test SMTP Credentials';
+            }
+        });
+    </script>
+</body>
+</html>
